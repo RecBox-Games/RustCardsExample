@@ -1,24 +1,46 @@
-//! A collection of semi-random shape and image drawing examples.
-
 use ggez::{
     event,
     glam::Vec2,
     graphics,
     Context, GameResult,
 };
-use std::path;
+
+use std::{path, fs, collections::HashMap};
+
+mod standard_deck;
+use standard_deck::*;
+use CardSuit::*;
+use CardRank::*;
+    
+
+fn load_card_images(ctx: &mut Context) -> HashMap<CardSpec, graphics::Image> {
+    let fronts_path = path::Path::new("./resources/card_fronts/");
+    // panic if we can't read images in that directory
+    let card_img_names: Vec<_> = fs::read_dir(fronts_path).unwrap().map(|x| {
+        x.unwrap().file_name().to_str().unwrap().to_string()
+    }).collect();
+    let mut img_map: HashMap<CardSpec, graphics::Image> = HashMap::new();
+    for img_name in card_img_names {
+        let mut parts = img_name.split(".").next().unwrap().split("_");
+        parts.next();
+        let card_spec = CardSpec::from_strs(parts.next().unwrap(), parts.next().unwrap());
+        // panic if we can't create each image        
+        let img = graphics::Image::from_path(ctx, &format!("/card_fronts/{}", img_name)).unwrap();
+        img_map.insert(card_spec, img);
+        
+    }
+    img_map
+}
 
 struct MainState {
-    card_img: graphics::Image,
+    card_fronts: HashMap<CardSpec, graphics::Image>,
 }
 
 impl MainState {
     /// Load images and create meshes.
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let card_img = graphics::Image::from_path(ctx, "/card_fronts/card_diamonds_07.png")?;
-
         let s = MainState {
-            card_img,
+            card_fronts: load_card_images(ctx),
         };
 
         Ok(s)
@@ -39,7 +61,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // Draw an image.
         canvas.set_sampler(graphics::Sampler::nearest_clamp());
         let dst = Vec2::new(20.0, 20.0);
-        canvas.draw(&self.card_img, graphics::DrawParam::new().dest(dst));
+        canvas.draw(&self.card_fronts[&CardSpec::new(Spade, _03)], graphics::DrawParam::new().dest(dst));
 
         // Finished drawing, show it all on the screen!
         canvas.finish(ctx)?;
