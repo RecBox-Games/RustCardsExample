@@ -102,13 +102,6 @@ pub struct CardSpec {
     rank: CardRank,
 }
 impl CardSpec {
-    pub fn new(suit: CardSuit, rank: CardRank) -> Self {
-        Self {
-            suit,
-            rank,
-        }
-    }
-    
     pub fn from_strs(suit: &str, rank: &str) -> Self {
         Self {
             suit: CardSuit::from_str(suit),

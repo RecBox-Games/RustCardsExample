@@ -3,7 +3,7 @@ use crate::standard_deck::*;
 mod draw_my_card_game;
 
 use crate::progress::*;
-
+use ggez::input::keyboard::KeyCode;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -34,9 +34,9 @@ impl Deck {
     }
 }
 
-const SPLAY_RISE_TIME: f32 = 0.3;
-const SPLAY_FLIP_TIME: f32 = 0.3;
-const SPLAY_TRAVEL_TIME: f32 = 1.0;
+const SPLAY_RISE_TIME: f32 = 0.1;
+const SPLAY_FLIP_TIME: f32 = 0.2;
+const SPLAY_TRAVEL_TIME: f32 = 0.3;
 enum SplayProgression {
     Rise(Progression),
     Flip(Progression),
@@ -68,7 +68,6 @@ impl SplayProgression {
             Travel(p) => {
                 p.update();
             }
-            _ => {}
         }
     }
 
@@ -115,8 +114,6 @@ impl MyCardGame {
     pub fn update(&mut self) {
         self.frame += 1;
         if self.frame == 60 {
-            let next_card = self.deck.cards.pop().unwrap();
-            self.splaying_card = Some((next_card, SplayProgression::new()));
         }
         if let Some((card_spec, splay_p)) = &mut self.splaying_card {
             if splay_p.is_done() {
@@ -125,6 +122,14 @@ impl MyCardGame {
             } else {
                 splay_p.update();
             };
+        }
+    }
+
+    pub fn handle_key(&mut self, _key: KeyCode) {
+        if self.splaying_card.is_none() {
+            if let Some(next_card) = self.deck.cards.pop() {
+                self.splaying_card = Some((next_card, SplayProgression::new()));
+            }
         }
     }
 }
