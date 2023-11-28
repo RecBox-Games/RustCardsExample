@@ -35,7 +35,7 @@ impl Progression {
     pub fn new(duration: f32) -> Self {
         Self {
             progress: 0.0,
-            per_tick: duration/60.0,
+            per_tick: 1.0/(60.0*duration),
         }
     }
 

@@ -3,13 +3,14 @@ use ggez::{
     graphics::{self, Canvas, DrawParam}, Context, GameResult,
 };
 use glam::Vec2;
+use std::f32::consts::PI;
 
 // TODO: move to sahred location
 const CARD_IMG_WIDTH: f32 = 148.0;
 const CARD_IMG_HEIGHT: f32 = 148.0;
 
 // screen locations
-const MAX_SPLAYED_CARDS: usize = 5;
+const MAX_SPLAYED_CARDS: usize = 7;
 
 
 
@@ -41,52 +42,68 @@ impl MyCardGame {
         // draw splayed cards
         let splayed_cards_x = (screen_width - CARD_IMG_WIDTH * MAX_SPLAYED_CARDS as f32) / 2.0;
         let splayed_cards_loc = Vec2::new( splayed_cards_x, 60.0 );
+        for card_spec in &self.splayed_cards {
+            let card_loc = splayed_cards_loc + Vec2::new(CARD_IMG_WIDTH * self.splayed_cards.len() as f32, 0.0);
+            canvas.draw(deck_res.get_card_image(card_spec), card_loc);
+        }
         //
         // draw center card
         let center_card_loc = Vec2::new(
             (screen_width - CARD_IMG_WIDTH) / 2.0,
             (screen_height - CARD_IMG_HEIGHT) / 2.0,
         );
-        canvas.draw(deck_res.get_card_image(&self.center_card),
-                    DrawParam::new().dest(center_card_loc));
+        canvas.draw(deck_res.get_card_image(&self.center_card), center_card_loc);
         //
         // draw deck
         let deck_loc = center_card_loc + Vec2::new(CARD_IMG_WIDTH, 0.0);
         self.deck.draw(canvas, deck_loc, deck_res);
         //
         // draw in-motion card
-        /*let splaying_card_start = deck_loc + self.deck.top_offset();
-        let splaying_card_end = splayed_cards_loc + Vec2(CARD_IMG_WIDTH*self.splayed_cards.len());
-        self.draw_splaying_card(canvas, splaying_card_start, splaying_card_end);
-*/
+        let splaying_card_start = deck_loc + self.deck.top_offset();
+        let splaying_card_end = splayed_cards_loc + Vec2::new(CARD_IMG_WIDTH*self.splayed_cards.len() as f32, 0.0);
+        self.draw_splaying_card(canvas, splaying_card_start, splaying_card_end, deck_res);
+        //
         Ok(())
     }
 
-    pub fn draw_splaying_card(&self, canvas: &mut Canvas, start_loc: Vec2, end_loc: Vec2) {
-//        use SplayProgression::*;
-/*        let splay_progress = if let Some((a, b)p) = self.splaying_card {
-            1
+    pub fn draw_splaying_card(&self, canvas: &mut Canvas, start_loc: Vec2, end_loc: Vec2, deck_res: &StandardDeckResources) {
+        let (card_spec, splay_progress) = match &self.splaying_card {
+            Some((cs, sp)) => (cs, sp),
+            _ => {return}, // don't draw the splaying card if there is no card being splayed
         };
-        match self.spl {
+        //
+        use SplayProgression::*;
+        match splay_progress {
             Rise(p) => {
-                p.update();
-                if p.is_done() {
-                    *self = Flip(Progression::new(SPLAY_FLIP_TIME)); 
-                }
+                let rising_loc = start_loc - p.progress() * Vec2::new(0.0, 12.0);
+                canvas.draw(deck_res.get_back_image(), rising_loc);
             }
             Flip(p) => {
-                p.update();
-                if p.is_done() {
-                    *self = Flip(Progression::new(SPLAY_TRAVEL_TIME)); 
-                }
+                let risen_loc = start_loc - Vec2::new(0.0, 12.0);
+                let flip_scale = (p.progress() * PI).cos().abs();
+                let flip_offset = (1.0 - flip_scale)*0.5*CARD_IMG_WIDTH;
+                let flip_loc = risen_loc + Vec2::new(flip_offset, 0.0);
+                let card_side = if p.progress() < 0.5 {
+                    deck_res.get_back_image()
+                } else {
+                    deck_res.get_card_image(card_spec)
+                };
+                canvas.draw(card_side, DrawParam::default()
+                            .dest(flip_loc)
+                            .scale(Vec2::new(flip_scale, 1.0)));
             }
             Travel(p) => {
-                p.update();
+                let risen_loc = start_loc - Vec2::new(0.0, 12.0);
+                let travel_loc = interpolate(risen_loc, end_loc, p.progress());
+                canvas.draw(deck_res.get_card_image(card_spec), travel_loc);
             }
             _ => {}
         }
-        */
     }
 
 }
 
+
+fn interpolate(start_loc: Vec2, end_loc: Vec2, progress: f32) -> Vec2 {
+    (1.0 - progress) * start_loc  +  progress * end_loc
+}

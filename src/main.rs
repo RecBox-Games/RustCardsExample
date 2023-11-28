@@ -35,6 +35,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
     // called once per frame (synchronous with MainState::draw())
     // default 60 frames per second
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        self.card_game.update();
         Ok(())
     }
 

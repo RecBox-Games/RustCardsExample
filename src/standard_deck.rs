@@ -9,7 +9,7 @@ pub const CARD_RANKS: [CardRank; 13] = [ _02, _03, _04, _05, _06, _07, _08, _09,
                                           _10, _J, _Q, _K, _A, ];
 
 //////// CardSuit ////////
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub enum CardSuit {
     Heart,
     Diamond,
@@ -39,7 +39,7 @@ impl CardSuit {
 }
 
 //////// CardRank ////////
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub enum CardRank {
     _02,
     _03,
@@ -96,7 +96,7 @@ impl CardRank {
 }
 
 //////// CardSpec ////////
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub struct CardSpec {
     suit: CardSuit,
     rank: CardRank,

@@ -34,8 +34,8 @@ impl Deck {
     }
 }
 
-const SPLAY_RISE_TIME: f32 = 0.5;
-const SPLAY_FLIP_TIME: f32 = 0.5;
+const SPLAY_RISE_TIME: f32 = 0.3;
+const SPLAY_FLIP_TIME: f32 = 0.3;
 const SPLAY_TRAVEL_TIME: f32 = 1.0;
 enum SplayProgression {
     Rise(Progression),
@@ -44,7 +44,6 @@ enum SplayProgression {
     //Lower(Progression),
 }
 
-/*
 impl SplayProgression {
     fn new() -> Self {
         use SplayProgression::*;
@@ -63,7 +62,7 @@ impl SplayProgression {
             Flip(p) => {
                 p.update();
                 if p.is_done() {
-                   *self = Flip(Progression::new(SPLAY_TRAVEL_TIME)); 
+                   *self = Travel(Progression::new(SPLAY_TRAVEL_TIME)); 
                 }
             }
             Travel(p) => {
@@ -75,12 +74,11 @@ impl SplayProgression {
 
     fn is_done(&self) -> bool {
         match self {
-            Travel(p) => p.is_done(),
+            SplayProgression::Travel(p) => p.is_done(),
             _ => false,
         }
     }
 }
- */
 
 // Notice that the members of MyCardGame have no data for graphics. This is
 // so that the state of the game is separate from the representation (graphics)
@@ -97,6 +95,8 @@ pub struct MyCardGame {
     splaying_card: Option<(CardSpec, SplayProgression)>,
     // center_card: card in the center of the screen next to the deck
     center_card: CardSpec,
+    // temporary
+    frame: usize,
 }
 
 impl MyCardGame {
@@ -108,6 +108,23 @@ impl MyCardGame {
             splayed_cards: Vec::new(),
             splaying_card: None,
             center_card,
+            frame: 0,
+        }
+    }
+
+    pub fn update(&mut self) {
+        self.frame += 1;
+        if self.frame == 60 {
+            let next_card = self.deck.cards.pop().unwrap();
+            self.splaying_card = Some((next_card, SplayProgression::new()));
+        }
+        if let Some((card_spec, splay_p)) = &mut self.splaying_card {
+            if splay_p.is_done() {
+                self.splayed_cards.push(*card_spec);
+                self.splaying_card = None;
+            } else {
+                splay_p.update();
+            };
         }
     }
 }
