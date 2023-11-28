@@ -1,69 +1,56 @@
 use ggez::{
     event,
-    glam::Vec2,
     graphics,
     Context, GameResult,
 };
+use std::path;
 
-use std::{path, fs, collections::HashMap};
-
+mod progress;
+mod my_card_game;
+use my_card_game::*;
 mod standard_deck;
 use standard_deck::*;
-use CardSuit::*;
-use CardRank::*;
-    
-
-fn load_card_images(ctx: &mut Context) -> HashMap<CardSpec, graphics::Image> {
-    let fronts_path = path::Path::new("./resources/card_fronts/");
-    // panic if we can't read images in that directory
-    let card_img_names: Vec<_> = fs::read_dir(fronts_path).unwrap().map(|x| {
-        x.unwrap().file_name().to_str().unwrap().to_string()
-    }).collect();
-    let mut img_map: HashMap<CardSpec, graphics::Image> = HashMap::new();
-    for img_name in card_img_names {
-        let mut parts = img_name.split(".").next().unwrap().split("_");
-        parts.next();
-        let card_spec = CardSpec::from_strs(parts.next().unwrap(), parts.next().unwrap());
-        // panic if we can't create each image        
-        let img = graphics::Image::from_path(ctx, &format!("/card_fronts/{}", img_name)).unwrap();
-        img_map.insert(card_spec, img);
-        
-    }
-    img_map
-}
 
 struct MainState {
-    card_fronts: HashMap<CardSpec, graphics::Image>,
+    deck_resources: StandardDeckResources,
+    card_game: MyCardGame,
 }
 
 impl MainState {
-    /// Load images and create meshes.
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let s = MainState {
-            card_fronts: load_card_images(ctx),
+        let state = MainState {
+            deck_resources: StandardDeckResources::new(ctx),
+            card_game: MyCardGame::new(),
         };
-
-        Ok(s)
+        Ok(state)
     }
 }
 
 
+// By implementing EventHandler, we are making MainState play nicely with
+// ggez's game loop. When we call event::run() in main with a MainState passed
+// in, we are starting a loop where update() and draw() are called repeatedly
 impl event::EventHandler<ggez::GameError> for MainState {
 
+    // called once per frame (synchronous with MainState::draw())
+    // default 60 frames per second
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         Ok(())
     }
 
+    // called once per frame (synchronous with MainState::update())
+    // default 60 frames per second
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas =
-            graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.2, 0.3, 1.0]));
+            graphics::Canvas::from_frame(ctx, graphics::Color::from([0.4, 0.9, 0.6, 1.0]));
 
-        // Draw an image.
+        // make things pixely instead of blury
         canvas.set_sampler(graphics::Sampler::nearest_clamp());
-        let dst = Vec2::new(20.0, 20.0);
-        canvas.draw(&self.card_fronts[&CardSpec::new(Spade, _03)], graphics::DrawParam::new().dest(dst));
 
-        // Finished drawing, show it all on the screen!
+        // draw MyCardGame
+        self.card_game.draw(&mut canvas, ctx, &self.deck_resources)?;
+
+        // finished drawing, show it all on the screen!
         canvas.finish(ctx)?;
 
         Ok(())
