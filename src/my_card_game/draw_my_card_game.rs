@@ -57,7 +57,7 @@ impl MyCardGame {
         let deck_loc = center_card_loc + Vec2::new(CARD_IMG_WIDTH, 0.0);
         self.deck.draw(canvas, deck_loc, deck_res);
         //
-        // draw in-motion (splaying) cards
+        // draw splaying cards
         for i in (0..self.splaying_cards.len()).rev() {
             let card_start = deck_loc + self.deck.top_offset();
             let card_end = splayed_cards_loc + Vec2::new(SPLAYED_CARD_DISTANCE*(self.splayed_cards.len() + i) as f32, 0.0);
@@ -67,12 +67,19 @@ impl MyCardGame {
             draw_splaying_card(canvas, splay_p, card_start, card_end, card_img, back_img);
         }
         //
+        // draw giving card
+        if let Some((_, prog)) = &self.giving_card {
+            let start_loc = deck_loc + self.deck.top_offset();
+            let end_loc = Vec2::new(screen_width*0.6, screen_height);
+            let giving_loc = giving_card_loc(start_loc, end_loc, prog.progress());
+            canvas.draw(deck_res.get_back_image(), giving_loc);
+        }
+        //
         Ok(())
     }
 
     
 }
-
 
 fn draw_splaying_card(canvas: &mut Canvas, splay_progress: &SplayProgression,
                           start_loc: Vec2, end_loc: Vec2,
@@ -99,14 +106,61 @@ fn draw_splaying_card(canvas: &mut Canvas, splay_progress: &SplayProgression,
         }
         Travel(p) => {
             let risen_loc = start_loc - Vec2::new(0.0, 12.0);
-            let travel_loc = interpolate(risen_loc, end_loc, p.progress());
+            let travel_loc = interpolate(risen_loc, end_loc, Interpolation::Natural, p.progress());
             canvas.draw(card_img, travel_loc);
         }
     }
 }
 
 
-// linear interpolation between two points
-fn interpolate(start_loc: Vec2, end_loc: Vec2, progress: f32) -> Vec2 {
-    (1.0 - progress) * start_loc  +  progress * end_loc
+
+fn giving_card_loc(start_loc: Vec2, end_loc: Vec2, p: f32) -> Vec2 {
+    let lift_loc = start_loc + Vec2::new(3.0, -15.0);
+    // this interpolation will quickly progress toward lift_loc while slowly
+    // progressing towards end_loc then, as it progrsses, start to move more
+    // quickly towards end_loc and more slowly towards lift_loc
+    interpolate2(start_loc, lift_loc, end_loc,
+                 Interpolation::SlowDown, Interpolation::SpeedUp,
+                 p)
+}
+
+enum Interpolation {
+    Linear,
+    SlowDown,
+    SpeedUp,
+    RoundStart,
+    RoundEnd,
+    RoundFull,
+    Natural,
+}
+
+// interpolation between two points (use Interpolation::Linear for constant speed)
+fn interpolate(start_loc: Vec2, end_loc: Vec2, interp: Interpolation, progress: f32) -> Vec2 {
+    use Interpolation::*;
+    let p = match interp {
+        Linear => progress,
+        SlowDown => progress.sqrt(),
+        SpeedUp => progress.powf(2.0),
+        RoundStart => 1.0 - (progress * PI/2.0).cos(),
+        RoundEnd => (progress * PI/2.0).sin(),
+        RoundFull =>  (1.0 + ((1.0 - progress) * PI).cos())/2.0,
+        Natural => {
+            let roundfull = (1.0 + ((1.0 - progress) * PI).cos())/2.0;
+            let roundend = (progress * PI/2.0).sin();
+            (roundfull + roundend)/2.0
+        }
+    };
+    //
+    (1.0 - p) * start_loc  +  p * end_loc
+}
+
+
+// interpolate along a curved path between start_loc and end_loc that curves
+// towards intermediary (the final interpolation is linear, change the function
+// if you want to do something different)
+fn interpolate2(start_loc: Vec2, intermediary_loc: Vec2, end_loc: Vec2,
+                interp1: Interpolation, interp2: Interpolation, progress: f32) -> Vec2 {
+    let interp_a = interpolate(start_loc, intermediary_loc, interp1, progress);
+    let interp_b = interpolate(intermediary_loc, end_loc, interp2, progress);
+    return interpolate(interp_a, interp_b, Interpolation::Linear, progress);
 }

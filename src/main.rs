@@ -14,6 +14,7 @@ use standard_deck::*;
 struct MainState {
     deck_resources: StandardDeckResources,
     card_game: MyCardGame,
+    client_handles: Vec<String>,
 }
 
 impl MainState {
@@ -21,8 +22,34 @@ impl MainState {
         let state = MainState {
             deck_resources: StandardDeckResources::new(ctx),
             card_game: MyCardGame::new(),
+            client_handles: vec![],
         };
         Ok(state)
+    }
+
+    fn track_controlpad_clients(&mut self) {
+        if let Ok(true) = controlpads::clients_changed() {
+            if let Ok(handles) = controlpads::get_client_handles() {
+                self.client_handles = handles;
+            } else {
+                println!("Warning: Failed to get client handles");
+            }
+        }
+    }
+
+    fn receive_controlpad_messages(&mut self) -> Vec<(String, String)> {
+        self.track_controlpad_clients();
+        let mut messages: Vec<(String, String)> = Vec::new();
+        for handle in &self.client_handles {
+            if let Ok(msgs) = controlpads::get_messages(handle) {
+                for msg in &msgs {
+                    messages.push((handle.to_string(), msg.to_string()));
+                }
+            } else {
+                println!("WARNING: Error while gatting controlad messages");
+            }
+        }
+        messages
     }
 }
 
@@ -35,6 +62,11 @@ impl event::EventHandler<ggez::GameError> for MainState {
     // called once per frame (synchronous with MainState::draw())
     // default 60 frames per second
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        // handle received controlpad messages
+        for (client, msg) in self.receive_controlpad_messages() {
+            self.card_game.handle_controlpad_message(client, msg);
+        }
+        // update game
         self.card_game.update();
         Ok(())
     }
@@ -56,7 +88,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
     fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, _repeat: bool) -> GameResult {
         if let Some(keycode) = input.keycode {
-            self.card_game.handle_key(keycode);
+            self.card_game.handle_key_press(keycode);
         }
         Ok(())
     }    

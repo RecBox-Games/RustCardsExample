@@ -36,7 +36,7 @@ impl Deck {
 
 const SPLAY_RISE_TIME: f32 = 0.2;
 const SPLAY_FLIP_TIME: f32 = 0.4;
-const SPLAY_TRAVEL_TIME: f32 = 0.7;
+const SPLAY_TRAVEL_TIME: f32 = 1.5;
 enum SplayProgression {
     Rise(Progression),
     Flip(Progression),
@@ -94,8 +94,11 @@ pub struct MyCardGame {
     splaying_cards: Vec<(CardSpec, SplayProgression)>,
     // center_card: card in the center of the screen next to the deck
     center_card: CardSpec,
-    // temporary
+    // giving_card: facedown card that goes off the bottom of the screen to go to the player
+    giving_card: Option<(CardSpec, Progression)>,
 }
+
+const GIVING_TRAVEL_TIME: f32 = 1.0;
 
 impl MyCardGame {
     pub fn new() -> Self {
@@ -106,10 +109,12 @@ impl MyCardGame {
             splayed_cards: Vec::new(),
             splaying_cards: Vec::new(),
             center_card,
+            giving_card: None,
         }
     }
 
     pub fn update(&mut self) {
+        // update splaying card
         let mut i = 0;
         while i < self.splaying_cards.len() {
             let (card_spec, splay_p) = &mut self.splaying_cards[i];
@@ -121,13 +126,43 @@ impl MyCardGame {
                 i += 1;
             };
         }
+        // update giving card
+        if let Some((_, prog)) = &mut self.giving_card {
+            prog.update();
+            if prog.is_done() {
+                self.giving_card = None;
+            }
+        }
     }
 
-    pub fn handle_key(&mut self, _key: KeyCode) {
+    fn deal(&mut self) {
         if let Some(next_card) = self.deck.cards.pop() {
             self.splaying_cards.push((next_card, SplayProgression::new()));
         }
     }
+
+    fn give_card(&mut self) {
+        if self.giving_card.is_some() {
+            return;
+        }
+        if let Some(next_card) = self.deck.cards.pop() {
+            self.giving_card = Some((next_card, Progression::new(GIVING_TRAVEL_TIME)));
+        }
+    }
+    
+    pub fn handle_key_press(&mut self, _key: KeyCode) {
+        //self.deal();
+        self.give_card();
+    }
+
+    pub fn handle_controlpad_message(&mut self, client: String, message: String) {
+        if message.as_str() == "deal" {
+            self.deal();
+            controlpads::send_message(&client, "dealt")
+                .unwrap_or_else(|e| println!("WARNING: Error sending controlpad message: {}", e));
+        }
+    }
+    
 }
 
 
