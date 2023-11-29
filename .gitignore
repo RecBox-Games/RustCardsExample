@@ -2,3 +2,4 @@
 Cargo.lock
 target/
 small_resources
+node_modules
