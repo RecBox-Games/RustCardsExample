@@ -108,6 +108,10 @@ impl CardSpec {
             rank: CardRank::from_str(rank),
         }
     }
+
+    pub fn to_string(&self) -> String {
+        format!("{},{}", self.suit.to_str(), self.rank.to_str())
+    }
 }
 
 

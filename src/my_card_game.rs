@@ -79,6 +79,27 @@ impl SplayProgression {
     }
 }
 
+
+struct Player {
+    handle: String,
+    left_card: Option<CardSpec>,
+    right_card: Option<CardSpec>,
+}
+
+impl Player {
+
+    fn state_string(&self) -> String {
+        let lcard_state = self.left_card.map_or("".to_string(), |x| x.to_string());
+        let rcard_state = self.right_card.map_or("".to_string(), |x| x.to_string());
+        format!("{}:{}", lcard_state, rcard_state)
+    }
+    
+    fn update_controlpad(&self) {
+        controlpads::send_message(&self.handle, &format!("state:{}", self.state_string()));
+    }
+}
+
+
 // Notice that the members of MyCardGame have no data for graphics. This is
 // so that the state of the game is separate from the representation (graphics)
 // of the game. This is a personal design choice and you can do things
@@ -86,6 +107,7 @@ impl SplayProgression {
 // - The "state" of the game is handled in this file and the "representation"
 //   of the game is handled in draw_my_card_game.rs
 pub struct MyCardGame {
+    //// cards
     // deck: cards in the facedown deck in the center of the screen
     deck: Deck,
     // splayed_cards: cards at the top of the screen
@@ -96,6 +118,8 @@ pub struct MyCardGame {
     center_card: CardSpec,
     // giving_card: facedown card that goes off the bottom of the screen to go to the player
     giving_card: Option<(CardSpec, Progression)>,
+    ////
+    //players: 
 }
 
 const GIVING_TRAVEL_TIME: f32 = 1.0;
@@ -127,7 +151,7 @@ impl MyCardGame {
             };
         }
         // update giving card
-        if let Some((_, prog)) = &mut self.giving_card {
+        if let Some((card_spec, prog)) = &mut self.giving_card {
             prog.update();
             if prog.is_done() {
                 self.giving_card = None;
@@ -141,7 +165,7 @@ impl MyCardGame {
         }
     }
 
-    fn give_card(&mut self) {
+    fn start_give_card(&mut self) {
         if self.giving_card.is_some() {
             return;
         }
@@ -149,10 +173,14 @@ impl MyCardGame {
             self.giving_card = Some((next_card, Progression::new(GIVING_TRAVEL_TIME)));
         }
     }
+
+    fn finish_give_card(&mut self) {
+        //controlpads::send_message(
+    }
     
     pub fn handle_key_press(&mut self, _key: KeyCode) {
         //self.deal();
-        self.give_card();
+        self.start_give_card();
     }
 
     pub fn handle_controlpad_message(&mut self, client: String, message: String) {
