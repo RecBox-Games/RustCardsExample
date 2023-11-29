@@ -34,9 +34,9 @@ impl Deck {
     }
 }
 
-const SPLAY_RISE_TIME: f32 = 0.1;
-const SPLAY_FLIP_TIME: f32 = 0.2;
-const SPLAY_TRAVEL_TIME: f32 = 0.3;
+const SPLAY_RISE_TIME: f32 = 0.2;
+const SPLAY_FLIP_TIME: f32 = 0.4;
+const SPLAY_TRAVEL_TIME: f32 = 0.7;
 enum SplayProgression {
     Rise(Progression),
     Flip(Progression),
@@ -90,12 +90,11 @@ pub struct MyCardGame {
     deck: Deck,
     // splayed_cards: cards at the top of the screen
     splayed_cards: Vec<CardSpec>,
-    // splaying_card: the card traveling from the deck to the splayed_cards area
-    splaying_card: Option<(CardSpec, SplayProgression)>,
+    // splaying_cards: the card traveling from the deck to the splayed_cards area
+    splaying_cards: Vec<(CardSpec, SplayProgression)>,
     // center_card: card in the center of the screen next to the deck
     center_card: CardSpec,
     // temporary
-    frame: usize,
 }
 
 impl MyCardGame {
@@ -105,31 +104,28 @@ impl MyCardGame {
         Self {
             deck,
             splayed_cards: Vec::new(),
-            splaying_card: None,
+            splaying_cards: Vec::new(),
             center_card,
-            frame: 0,
         }
     }
 
     pub fn update(&mut self) {
-        self.frame += 1;
-        if self.frame == 60 {
-        }
-        if let Some((card_spec, splay_p)) = &mut self.splaying_card {
+        let mut i = 0;
+        while i < self.splaying_cards.len() {
+            let (card_spec, splay_p) = &mut self.splaying_cards[i];
             if splay_p.is_done() {
                 self.splayed_cards.push(*card_spec);
-                self.splaying_card = None;
+                self.splaying_cards.remove(i);
             } else {
                 splay_p.update();
+                i += 1;
             };
         }
     }
 
     pub fn handle_key(&mut self, _key: KeyCode) {
-        if self.splaying_card.is_none() {
-            if let Some(next_card) = self.deck.cards.pop() {
-                self.splaying_card = Some((next_card, SplayProgression::new()));
-            }
+        if let Some(next_card) = self.deck.cards.pop() {
+            self.splaying_cards.push((next_card, SplayProgression::new()));
         }
     }
 }
