@@ -45,7 +45,7 @@ impl Deck {
 
 //////// MyCardGame ////////
 impl MyCardGame {
-    pub fn draw(&self, canvas: &mut Canvas, ctx: &mut Context, res: &GameResources) -> GameResult<()> {
+    pub fn draw(&self, canvas: &mut Canvas, ctx: &mut Context, res: &mut GameResources) -> GameResult<()> {
         let (screen_width, screen_height) = ctx.gfx.drawable_size();
         // draw splayed cards
         let splayed_cards_loc = Vec2::new( 0.0, 40.0 );
@@ -83,6 +83,12 @@ impl MyCardGame {
             canvas.draw(res.deck_res.get_back_image(), giving_loc);
         }
         //
+        // draw player names
+        let mut name_loc = Vec2::new(20.0, 200.0);
+        for player in &self.players {
+            canvas.draw(res.get_text_graphic(&player.name), name_loc);
+            name_loc += Vec2::new(0.0, 40.0);
+        }
         Ok(())
     }
 

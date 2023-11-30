@@ -30,7 +30,10 @@ impl GameResources {
 
     pub fn get_text_graphic(&mut self, text: &str) -> &graphics::Text {
         if self.text_graphics.get(text).is_none() {
-            let new_graphic = graphics::Text::new(text);
+            let fragment = graphics::TextFragment::new(text)
+                .color((0.0, 0.0, 0.0))
+                .scale(32.0);
+            let new_graphic = graphics::Text::new(fragment);
             self.text_graphics.insert(text.to_string(), new_graphic);
         } 
         return self.text_graphics.get(text).unwrap();
