@@ -5,8 +5,8 @@
     <link rel="stylesheet" href="styles/wait.css">
     <link rel="stylesheet" href="styles/join.css">
     <meta charset="UTF-8" />
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" /> -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" /> 
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0" /> -->
     <title>GameNite Controlpad</title>
     <style>
       html,
@@ -20,7 +20,7 @@
       }
       
       body {
-          background-image: url('resources/bg.png'); /* Path to your image */
+          background-image: url('resources/bg2.png'); /* Path to your image */
           background-size: cover; /* Cover the entire page */
           background-repeat: no-repeat; /* Do not repeat the image */
           background-position: center; /* Center the image on the page */
@@ -29,6 +29,8 @@
           overflow: hidden;
           width: 100vw;
           height: 100vh;
+          left: 0%;
+          top: 0%;
           margin: 0;
           padding: 0;
           touch-action: none;
@@ -72,7 +74,21 @@
           margin: 0px;
           padding: 0px;
       }
-      
+
+      div#cardDiv {
+          position: absolute;
+          top: 44%;
+          left: 50%;
+          width: 90%;
+          height: 50%;
+          transform: translate(-50%, -50%);
+      }
+
+      .playing-card {
+          position: absolute;
+          width: 10%;
+          height: 96%;
+      }
 
     </style>
   </head>
@@ -94,7 +110,9 @@
         <button id="yesJoinButton" class="main-button">Confirm</button>
         <button id="noJoinButton" class="main-button">Cancel</button>
       </div>
-    </div>    
+    </div>
+    <!-- invisible div to hold cards -->
+    <div id="cardDiv"> </div>
     <!-- code -->
     <script type="module" src="controlpad.js"></script>
     <script type="module" src="app.js"></script>

@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# kill function
+function kill_process_by_name() {
+    pattern=$1
+    pids=$(ps aux | grep "$pattern" | grep -v grep | awk '{print $2}')
+    for pid in $pids; do
+        kill -9 $pid
+        echo "Killed process $pid"
+    done
+}
+
+
+# kill any previous instances of the game running
+kill_process_by_name rust_cards_example
+
 # don't continue if there's build errors
 set -e
 cargo check
@@ -20,3 +34,4 @@ $(
 
 # print out qr code to connect phones to web server at this computer's IP
 ifconfig | grep 'inet ' | tail -1 | sed 's/.*inet \([^ ]*\).*/http:\/\/\1:3000/' | qrencode -t utf8 -m 2
+

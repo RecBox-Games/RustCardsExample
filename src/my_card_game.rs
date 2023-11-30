@@ -8,6 +8,10 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 
+//////// Helpers ////////
+
+
+//////// Deck ////////
 struct Deck {
     cards: Vec<CardSpec>,
 }
@@ -34,6 +38,8 @@ impl Deck {
     }
 }
 
+
+//////// SplayProgression ////////
 const SPLAY_RISE_TIME: f32 = 0.2;
 const SPLAY_FLIP_TIME: f32 = 0.4;
 const SPLAY_TRAVEL_TIME: f32 = 1.5;
@@ -80,23 +86,31 @@ impl SplayProgression {
 }
 
 
+//////// Player ////////
 struct Player {
     handle: String,
+    name: String,
     left_card: Option<CardSpec>,
     right_card: Option<CardSpec>,
 }
 
 impl Player {
-
     fn state_string(&self) -> String {
         let lcard_state = self.left_card.map_or("".to_string(), |x| x.to_string());
         let rcard_state = self.right_card.map_or("".to_string(), |x| x.to_string());
-        format!("{}:{}", lcard_state, rcard_state)
+        format!("{}:{}:{}", &self.name, lcard_state, rcard_state)
+    }
+
+    fn send_message(&self, msg: &str) {
+        controlpads::send_message(&self.handle, msg)
+            .unwrap_or_else(|e| println!("WARNING: Error sending controlpad message: {}", e));
+
     }
     
-    fn update_controlpad(&self) {
-        controlpads::send_message(&self.handle, &format!("state:{}", self.state_string()));
+    fn send_state(&self) {
+        self.send_message(&format!("state:playing:{}", self.state_string()));
     }
+    
 }
 
 
@@ -117,9 +131,10 @@ pub struct MyCardGame {
     // center_card: card in the center of the screen next to the deck
     center_card: CardSpec,
     // giving_card: facedown card that goes off the bottom of the screen to go to the player
-    giving_card: Option<(CardSpec, Progression)>,
+    giving_card: Option<(CardSpec, String, Progression)>,
     ////
-    //players: 
+    //players:
+    players: Vec<Player>,
 }
 
 const GIVING_TRAVEL_TIME: f32 = 1.0;
@@ -134,6 +149,7 @@ impl MyCardGame {
             splaying_cards: Vec::new(),
             center_card,
             giving_card: None,
+            players: Vec::new(),
         }
     }
 
@@ -151,9 +167,10 @@ impl MyCardGame {
             };
         }
         // update giving card
-        if let Some((card_spec, prog)) = &mut self.giving_card {
+        if let Some((card_spec, player_handle, prog)) = &mut self.giving_card {
             prog.update();
             if prog.is_done() {
+                //self.finish_give_card(card_spec, player_handle);
                 self.giving_card = None;
             }
         }
@@ -165,30 +182,57 @@ impl MyCardGame {
         }
     }
 
-    fn start_give_card(&mut self) {
+    /*
+fn start_give_card(&mut self, player_handle: String) {
         if self.giving_card.is_some() {
             return;
         }
         if let Some(next_card) = self.deck.cards.pop() {
-            self.giving_card = Some((next_card, Progression::new(GIVING_TRAVEL_TIME)));
+            self.giving_card = Some((next_card, player_handle, Progression::new(GIVING_TRAVEL_TIME)));
         }
     }
 
-    fn finish_give_card(&mut self) {
-        //controlpads::send_message(
+    fn finish_give_card(&mut self, card_spec: CardSpec, player_handle: String) {
+        if let Some(player) = self.players.iter().find(|x| x == player_handle) {
+            send_message(&player_handle, &format!("card:"));
+        }
     }
+     */
     
     pub fn handle_key_press(&mut self, _key: KeyCode) {
-        //self.deal();
-        self.start_give_card();
+        self.deal();
+        //self.start_give_card();
     }
 
     pub fn handle_controlpad_message(&mut self, client: String, message: String) {
-        if message.as_str() == "deal" {
-            self.deal();
-            controlpads::send_message(&client, "dealt")
-                .unwrap_or_else(|e| println!("WARNING: Error sending controlpad message: {}", e));
+        let mut parts = message.split(":");
+        let msg_type = parts.next().unwrap(); // first on a split is always some
+        if let Some(player) = self.players.iter().find(|x| x.handle == client) {
+            match msg_type {
+                "state-request" => {
+                    // a state request after the player is already joined
+                    player.send_state();
+                }
+                _ => println!("WARNING: bad player message: {}", &message),
+            }
+        } else if msg_type == "state-request" {
+            // a state request before the player has joined
+            controlpads::send_message(&client, "state:joining")
+                .unwrap_or_else(|e| println!("WARNING: failed to send message: {}", e));
+        } else if msg_type == "join" {
+            let new_player = Player {
+                handle: client,
+                name: parts.next().unwrap_or("").to_string(),
+                left_card: self.deck.cards.pop(),
+                right_card: self.deck.cards.pop(),
+            };
+            new_player.send_state();
+            self.players.push(new_player);
+        } else {
+            println!("WARNING: a controlpad tried to send something other than \
+                      'join' when it hadn't joined yet");
         }
+        
     }
     
 }

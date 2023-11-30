@@ -40,6 +40,9 @@ The phones are controllers but we refer to the web-based instance of client
 code on the phone as a controlpad. That code exists in `controller/` and is 
 served by `controlpad_server/controlpad_web_server.js` over LAN
 
+- `controlpads.js` has the code for handling the websocket
+
+- `app.js` is what the game developer is meant to implement
 
 ### Communication between Game and Controlpads
 Communication progresses  `game` -> `controlpad_server` -> `controlpad clients`

@@ -68,7 +68,7 @@ impl MyCardGame {
         }
         //
         // draw giving card
-        if let Some((_, prog)) = &self.giving_card {
+        if let Some((_, _,  prog)) = &self.giving_card {
             let start_loc = deck_loc + self.deck.top_offset();
             let end_loc = Vec2::new(screen_width*0.6, screen_height);
             let giving_loc = giving_card_loc(start_loc, end_loc, prog.progress());

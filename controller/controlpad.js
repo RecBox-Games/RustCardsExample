@@ -1,3 +1,5 @@
+import { controlpadStart, controlpadUpdate } from "./app.js";
+
 const box_ip = window.location.href.split('/')[2].split(':')[0];
 
 var ws = new WebSocket("ws://" + box_ip + ":50079");
@@ -28,9 +30,15 @@ ws.onopen = (event) => {
 
     // receive messages
     ws.addEventListener('message', (event) => {
-        var controlpad_msg_event = new CustomEvent("controlpad-message", event.data);
+        var controlpad_msg_event = new CustomEvent("controlpad-message", {
+            detail: event.data,
+        });
         document.dispatchEvent(controlpad_msg_event);
     });
+
+    // start app
+    controlpadStart();
+    setInterval(controlpadUpdate, 33);
 }
 
 // send messages
