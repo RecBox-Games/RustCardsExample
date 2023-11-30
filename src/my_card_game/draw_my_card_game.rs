@@ -25,6 +25,12 @@ impl Deck {
     }
     
     pub fn draw(&self, canvas: &mut Canvas, location: Vec2, deck_res: &StandardDeckResources) {
+        // draw card_none.png to represent an empty deck
+        if self.cards.len() == 0 {
+            canvas.draw(deck_res.get_placeholder(), location);
+            return;
+        }
+        // draw cards up to a certain height depending how many cards are left
         for i in 0..self.deck_height() {
             canvas.draw(deck_res.get_back_image(), location + self.facedown_card_offset(i));
         }

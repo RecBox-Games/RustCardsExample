@@ -11,6 +11,19 @@ use my_card_game::*;
 mod standard_deck;
 use standard_deck::*;
 
+// screen width
+#[cfg(debug_assertions)]
+const SCREEN_WIDTH: f32 = 1200.0;
+#[cfg(not(debug_assertions))]
+const SCREEN_WIDTH: f32 = 1920.0;
+
+// screen height
+#[cfg(debug_assertions)]
+const SCREEN_HEIGHT: f32 = 800.0;
+#[cfg(not(debug_assertions))]
+const SCREEN_HEIGHT: f32 = 1080.0;
+
+
 struct MainState {
     deck_resources: StandardDeckResources,
     card_game: MyCardGame,
@@ -99,7 +112,7 @@ pub fn main() -> GameResult {
     let cb = ggez::ContextBuilder::new("drawing", "ggez")
         .add_resource_path(resource_dir)
         .window_mode(ggez::conf::WindowMode::default()
-                     .dimensions(1920.0, 1080.0)
+                     .dimensions(SCREEN_WIDTH, SCREEN_HEIGHT)
                      .resizable(true)
         );
     let (mut ctx, events_loop) = cb.build()?;

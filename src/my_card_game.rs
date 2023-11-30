@@ -213,6 +213,9 @@ fn start_give_card(&mut self, player_handle: String) {
                     // a state request after the player is already joined
                     player.send_state();
                 }
+                "deal" => {
+                    self.deal();
+                }
                 _ => println!("WARNING: bad player message: {}", &message),
             }
         } else if msg_type == "state-request" {

@@ -1,5 +1,5 @@
 import { sendControlpadMessage } from "./controlpad.js"
-import { showJoinBox } from "./join.js"
+import { hideJoinBox, showJoinBox } from "./join.js"
 import { hideWaitBox } from "./wait.js"
 
                           
@@ -18,6 +18,7 @@ document.addEventListener("controlpad-message", (event) => {
     } else if (state == "playing") {
         updatePlayingState(arg1, arg2, arg3);
         hideWaitBox();
+        hideJoinBox();
     }
 });
 
@@ -48,17 +49,13 @@ function updatePlayingState(name, left_card_str, right_card_str) {
     card_div.style.width = "100" + constraint;
     card_div.style.height = "58" + constraint;
     // left card
-    if (left_card_str != "") {
-        var card_img_left = createCardElement(left_card_str);
-        card_img_left.style.left = "0%";
-        card_div.appendChild(card_img_left);
-    }
+    var card_img_left = createCardElement(left_card_str);
+    card_img_left.style.left = "0%";
+    card_div.appendChild(card_img_left);
     // right card
-    if (right_card_str != "") {
-        var card_img_right = createCardElement(right_card_str);
-        card_img_right.style.right = "0%";
-        card_div.appendChild(card_img_right);
-    }
+    var card_img_right = createCardElement(right_card_str);
+    card_img_right.style.right = "0%";
+    card_div.appendChild(card_img_right);
     // deal button
     var deal_button = createDealButton();
     card_div.appendChild(deal_button);
@@ -71,7 +68,7 @@ function createDealButton() {
     img.src = "./resources/deal.png";
     // todo other things below
     img.addEventListener("click", function() {
-        console.log("deal clicked");
+        sendControlpadMessage("deal");
     });
     // position the card
     img.style.position = "absolute";
@@ -84,13 +81,18 @@ function createDealButton() {
 }
 
 function createCardElement(card_str) {
-    // parse card spec
-    var parts = card_str.split(",");
-    var suit = parts[0];
-    var rank = parts[1];
     var img = document.createElement("img");
-    // load image
-    img.src = "./resources/card_fronts/card_" + suit + "_" + rank + ".png";
+    // parse card spec
+    print("sdds " + card_str);
+    if (card_str == "") {
+        img.src = "./resources/card_none.png";
+
+    } else {
+        var parts = card_str.split(",");
+        var suit = parts[0];
+        var rank = parts[1];
+        img.src = "./resources/card_fronts/card_" + suit + "_" + rank + ".png";
+    }
     // todo other things below
     img.addEventListener("click", function() {
         console.log("card clicked");
