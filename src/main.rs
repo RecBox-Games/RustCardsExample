@@ -10,6 +10,8 @@ mod my_card_game;
 use my_card_game::*;
 mod standard_deck;
 use standard_deck::*;
+mod resources;
+use resources::*;
 
 // screen width
 #[cfg(debug_assertions)]
@@ -25,7 +27,7 @@ const SCREEN_HEIGHT: f32 = 1080.0;
 
 
 struct MainState {
-    deck_resources: StandardDeckResources,
+    resources: GameResources,
     card_game: MyCardGame,
     client_handles: Vec<String>,
 }
@@ -33,7 +35,7 @@ struct MainState {
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
         let state = MainState {
-            deck_resources: StandardDeckResources::new(ctx),
+            resources: GameResources::new(ctx),
             card_game: MyCardGame::new(),
             client_handles: vec![],
         };
@@ -92,7 +94,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // make things pixely instead of blury
         canvas.set_sampler(graphics::Sampler::nearest_clamp());
         // draw MyCardGame
-        self.card_game.draw(&mut canvas, ctx, &self.deck_resources)?;
+        self.card_game.draw(&mut canvas, ctx, &self.resources)?;
         // finished drawing, show it all on the screen!
         canvas.finish(ctx)?;
         Ok(())

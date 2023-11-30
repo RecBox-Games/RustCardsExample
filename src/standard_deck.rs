@@ -119,7 +119,6 @@ impl CardSpec {
 pub struct StandardDeckResources {
     card_fronts: HashMap<CardSpec, graphics::Image>,
     card_back: graphics::Image,
-    card_placeholder: graphics::Image,
 }
 
 impl StandardDeckResources {
@@ -127,7 +126,6 @@ impl StandardDeckResources {
         Self {
             card_fronts: load_card_fronts(ctx),
             card_back: graphics::Image::from_path(ctx, "/card_back.png").unwrap(),
-            card_placeholder: graphics::Image::from_path(ctx, "/card_none.png").unwrap()
         }
     }
 
@@ -137,10 +135,6 @@ impl StandardDeckResources {
 
     pub fn get_back_image(&self) -> &graphics::Image {
         &self.card_back
-    }
-
-    pub fn get_placeholder(&self) -> &graphics::Image {
-        &self.card_placeholder
     }
 }
 

@@ -36,24 +36,38 @@ export function controlpadUpdate() {
     
 }
 
+var PLAYER_NAME = "";
+var LEFT_CARD_STR = "";
+var RIGHT_CARD_STR = "";
 
 function updatePlayingState(name, left_card_str, right_card_str) {
+    PLAYER_NAME = name;
+    LEFT_CARD_STR = left_card_str;
+    RIGHT_CARD_STR = right_card_str;
+    showPlayingState();
+}
+
+function showPlayingState() {
     // name
-    showName(name);
+    showName(PLAYER_NAME);
+    // use a div to contain the cards
+    let card_div = document.getElementById("cardDiv");
+    // remove previous elements from that div
+    while (card_div.firstChild) {
+        card_div.removeChild(card_div.firstChild);
+    }
     // size the card div
     let vw = window.innerWidth;
     let vh = window.innerHeight;
-    // determine the shorter dimensions to account for portrait vs landscape
-    let constraint = vw < vh ? "vw" : "vh";
-    let card_div = document.getElementById("cardDiv");
+    let constraint = vw < vh ? "vw" : "vh"; // account for portrait vs landscape
     card_div.style.width = "100" + constraint;
     card_div.style.height = "58" + constraint;
     // left card
-    var card_img_left = createCardElement(left_card_str);
+    var card_img_left = createCardElement("L", LEFT_CARD_STR);
     card_img_left.style.left = "0%";
     card_div.appendChild(card_img_left);
     // right card
-    var card_img_right = createCardElement(right_card_str);
+    var card_img_right = createCardElement("R", RIGHT_CARD_STR);
     card_img_right.style.right = "0%";
     card_div.appendChild(card_img_right);
     // deal button
@@ -80,23 +94,31 @@ function createDealButton() {
     return img;
 }
 
-function createCardElement(card_str) {
+function createCardElement(side, card_str) {
     var img = document.createElement("img");
-    // parse card spec
-    print("sdds " + card_str);
+    //
+    // parse card spec and set click(tap) callback
     if (card_str == "") {
         img.src = "./resources/card_none.png";
-
     } else {
         var parts = card_str.split(",");
         var suit = parts[0];
         var rank = parts[1];
         img.src = "./resources/card_fronts/card_" + suit + "_" + rank + ".png";
+        // send card:* message on press
+        let isLeft = side == "L";
+        img.addEventListener("click", () => {
+            sendControlpadMessage("card:" + side + "," + suit + "," + rank);
+            if (isLeft) {
+                LEFT_CARD_STR = "";
+            } else {
+                RIGHT_CARD_STR = "";
+            };
+            showPlayingState();
+        });
+
     }
-    // todo other things below
-    img.addEventListener("click", function() {
-        console.log("card clicked");
-    });
+    //
     // position the card
     img.style.position = "absolute";
     img.style.width ="53%";

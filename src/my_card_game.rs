@@ -9,7 +9,13 @@ use rand::thread_rng;
 
 
 //////// Helpers ////////
-
+fn parse_card(card_str: &str) -> Option<(&str, &str, &str)> {
+    let mut parts = card_str.split(",");
+    let side = parts.next()?;
+    let suit = parts.next()?;
+    let rank = parts.next()?;
+    return Some((side, suit, rank));
+}
 
 //////// Deck ////////
 struct Deck {
@@ -110,7 +116,15 @@ impl Player {
     fn send_state(&self) {
         self.send_message(&format!("state:playing:{}", self.state_string()));
     }
-    
+
+    fn revoke_card(&mut self, is_left: bool) {
+        if is_left {
+            self.left_card = None;
+        } else {
+            self.right_card = None;
+
+        };
+    }
 }
 
 
@@ -131,7 +145,7 @@ pub struct MyCardGame {
     // center_card: card in the center of the screen next to the deck
     center_card: CardSpec,
     // giving_card: facedown card that goes off the bottom of the screen to go to the player
-    giving_card: Option<(CardSpec, String, Progression)>,
+    giving_card: Option<(String, Progression)>,
     ////
     //players:
     players: Vec<Player>,
@@ -167,12 +181,16 @@ impl MyCardGame {
             };
         }
         // update giving card
-        if let Some((card_spec, player_handle, prog)) = &mut self.giving_card {
+        let mut give_finish: Option<String> = None; // get around borrowing rules
+        if let Some((player_handle, prog)) = &mut self.giving_card {
             prog.update();
             if prog.is_done() {
-                //self.finish_give_card(card_spec, player_handle);
+                give_finish = Some(player_handle.clone());
                 self.giving_card = None;
             }
+        }
+        if let Some(player_handle) = give_finish {
+            self.finish_give_card(&player_handle);
         }
     }
 
@@ -182,32 +200,43 @@ impl MyCardGame {
         }
     }
 
-    /*
-fn start_give_card(&mut self, player_handle: String) {
+    // Assumes player_handle is a valid handle for a player in self.players
+    fn start_give_card(&mut self, player_handle: String, side: &str, suit: &str, rank: &str) {
         if self.giving_card.is_some() {
             return;
         }
+        let player = self.players.iter_mut().find(|x| x.handle == player_handle).unwrap();
         if let Some(next_card) = self.deck.cards.pop() {
-            self.giving_card = Some((next_card, player_handle, Progression::new(GIVING_TRAVEL_TIME)));
+            self.center_card = CardSpec::from_strs(suit, rank);
+            player.revoke_card(side == "L");
+            // we set the card here, but we won't tell the player about it (via
+            // send_state()) until the giving_card progresses across the screen
+            if side == "L" {
+                player.left_card = Some(next_card);
+            } else {
+                player.right_card = Some(next_card);
+            }
+            self.giving_card = Some((player.handle.clone(), Progression::new(GIVING_TRAVEL_TIME)));
         }
     }
 
-    fn finish_give_card(&mut self, card_spec: CardSpec, player_handle: String) {
-        if let Some(player) = self.players.iter().find(|x| x == player_handle) {
-            send_message(&player_handle, &format!("card:"));
+    fn finish_give_card(&mut self, player_handle: &str) {
+        if let Some(player) = self.players.iter().find(|x| x.handle == player_handle) {
+            player.send_state();
         }
     }
-     */
+    
     
     pub fn handle_key_press(&mut self, _key: KeyCode) {
         self.deal();
+
         //self.start_give_card();
     }
 
     pub fn handle_controlpad_message(&mut self, client: String, message: String) {
         let mut parts = message.split(":");
         let msg_type = parts.next().unwrap(); // first on a split is always some
-        if let Some(player) = self.players.iter().find(|x| x.handle == client) {
+        if let Some(player) = self.players.iter_mut().find(|x| x.handle == client) {
             match msg_type {
                 "state-request" => {
                     // a state request after the player is already joined
@@ -215,6 +244,12 @@ fn start_give_card(&mut self, player_handle: String) {
                 }
                 "deal" => {
                     self.deal();
+                }
+                "card" => {
+                    let card_parse = parse_card(parts.next().unwrap_or(""));
+                    let (side, suit, rank) = if let Some((a, b, c)) = card_parse { (a,b,c) } else {return};
+                    let handle = player.handle.clone();
+                    self.start_give_card(handle, side, suit, rank);
                 }
                 _ => println!("WARNING: bad player message: {}", &message),
             }
@@ -239,5 +274,6 @@ fn start_give_card(&mut self, player_handle: String) {
     }
     
 }
+
 
 

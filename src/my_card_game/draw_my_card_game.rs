@@ -5,6 +5,8 @@ use ggez::{
 use glam::Vec2;
 use std::f32::consts::PI;
 
+use crate::resources::*;
+
 // TODO: move to sahred location
 const CARD_IMG_WIDTH: f32 = 148.0;
 const CARD_IMG_HEIGHT: f32 = 148.0;
@@ -24,15 +26,15 @@ impl Deck {
         Vec2::new(0.0, n as f32 * -2.0)
     }
     
-    pub fn draw(&self, canvas: &mut Canvas, location: Vec2, deck_res: &StandardDeckResources) {
+    pub fn draw(&self, canvas: &mut Canvas, location: Vec2, res: &GameResources) {
         // draw card_none.png to represent an empty deck
         if self.cards.len() == 0 {
-            canvas.draw(deck_res.get_placeholder(), location);
+            canvas.draw(res.get_placeholder(), location);
             return;
         }
         // draw cards up to a certain height depending how many cards are left
         for i in 0..self.deck_height() {
-            canvas.draw(deck_res.get_back_image(), location + self.facedown_card_offset(i));
+            canvas.draw(res.deck_res.get_back_image(), location + self.facedown_card_offset(i));
         }
     }
 
@@ -43,13 +45,13 @@ impl Deck {
 
 //////// MyCardGame ////////
 impl MyCardGame {
-    pub fn draw(&self, canvas: &mut Canvas, ctx: &mut Context, deck_res: &StandardDeckResources) -> GameResult<()> {
+    pub fn draw(&self, canvas: &mut Canvas, ctx: &mut Context, res: &GameResources) -> GameResult<()> {
         let (screen_width, screen_height) = ctx.gfx.drawable_size();
         // draw splayed cards
         let splayed_cards_loc = Vec2::new( 0.0, 40.0 );
         for (i, card_spec) in self.splayed_cards.iter().enumerate() {
             let card_loc = splayed_cards_loc + Vec2::new(SPLAYED_CARD_DISTANCE * i as f32, 0.0);
-            canvas.draw(deck_res.get_card_image(card_spec), card_loc);
+            canvas.draw(res.deck_res.get_card_image(card_spec), card_loc);
         }
         //
         // draw center card
@@ -57,28 +59,28 @@ impl MyCardGame {
             (screen_width - CARD_IMG_WIDTH) / 2.0,
             (screen_height - CARD_IMG_HEIGHT) / 2.0,
         );
-        canvas.draw(deck_res.get_card_image(&self.center_card), center_card_loc);
+        canvas.draw(res.deck_res.get_card_image(&self.center_card), center_card_loc);
         //
         // draw deck
         let deck_loc = center_card_loc + Vec2::new(CARD_IMG_WIDTH, 0.0);
-        self.deck.draw(canvas, deck_loc, deck_res);
+        self.deck.draw(canvas, deck_loc, res);
         //
         // draw splaying cards
         for i in (0..self.splaying_cards.len()).rev() {
             let card_start = deck_loc + self.deck.top_offset();
             let card_end = splayed_cards_loc + Vec2::new(SPLAYED_CARD_DISTANCE*(self.splayed_cards.len() + i) as f32, 0.0);
             let (card_spec, splay_p) = &self.splaying_cards[i];
-            let card_img = deck_res.get_card_image(&card_spec);
-            let back_img = deck_res.get_back_image();
+            let card_img = res.deck_res.get_card_image(&card_spec);
+            let back_img = res.deck_res.get_back_image();
             draw_splaying_card(canvas, splay_p, card_start, card_end, card_img, back_img);
         }
         //
         // draw giving card
-        if let Some((_, _,  prog)) = &self.giving_card {
+        if let Some((_, prog)) = &self.giving_card {
             let start_loc = deck_loc + self.deck.top_offset();
             let end_loc = Vec2::new(screen_width*0.6, screen_height);
             let giving_loc = giving_card_loc(start_loc, end_loc, prog.progress());
-            canvas.draw(deck_res.get_back_image(), giving_loc);
+            canvas.draw(res.deck_res.get_back_image(), giving_loc);
         }
         //
         Ok(())

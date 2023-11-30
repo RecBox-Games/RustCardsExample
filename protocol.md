@@ -21,6 +21,9 @@
 * `card:{L|R},<suit>,<rank>`
   * Sent when a card is pressed. Causes the center card in the game to be 
       replaced by the specified card.
+  * having the suit and rank in the message is not actually necessary since the 
+    game know the suit and rank of a given players let or right card. Changing 
+    the implementation to reflect this is left as an exercise to the reader...
 
 
 ## Game to Controlpads
