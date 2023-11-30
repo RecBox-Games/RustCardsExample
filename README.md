@@ -12,6 +12,15 @@ card game using a standard deck of cards.
 - OR use the qr code printed in the terminal to connect a phone on the same 
   wifi network
 
+#### Multiple Controllers
+
+- if you open two tabs to localhost:3000 on the same machine, the controlpad 
+  server will treat them both as the same client
+- to have your two tabs treated like two separate clients (presumably for 
+  testing purposes), add ?subid=N to the url, where N is a nonzero number 
+  unique to the tab
+  - e.g. tab1: `localhost:3000`, tab2: `localhost:3000?subid=1`, tab3: `localhost:3000?subid=2`, 
+
 
 ## Explanation
 
@@ -30,6 +39,10 @@ and is somewhat commented.
 
 - `progress.rs` contains the `Progression` struct which is used to keep track 
   of movements of cards over time
+
+- `resources.rs` contains the `GameResources` struct which contains graphical 
+  resources (images and text renders) and is passed to `draw()` functions where 
+  they are used
 
 - `standard_deck.rs` contains structs and enums to represent a standard deck of 
   cards and functionality to load the deck images from `resources/`
