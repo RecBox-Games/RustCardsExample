@@ -3,6 +3,12 @@ This example is meant to show how a GameNite game can be developed in Rust with
 ggez and tested natively. It also provides a basic framework for implementing a 
 card game using a standard deck of cards.
 
+#### Note
+You need to have access to the private **ControlpadServer** repo in order to 
+build this (which requires that you've signed a code non-disclosure agreement)
+- If there is interest, we can put together a pre-built library which will
+  allow you to use this repository without access to **ControlpadServer**
+
 
 ## Instructions
 
