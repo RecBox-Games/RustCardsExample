@@ -9,7 +9,6 @@ mod progress;
 mod my_card_game;
 use my_card_game::*;
 mod standard_deck;
-use standard_deck::*;
 mod resources;
 use resources::*;
 
@@ -94,7 +93,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         // make things pixely instead of blury
         canvas.set_sampler(graphics::Sampler::nearest_clamp());
         // draw MyCardGame
-        self.card_game.draw(&mut canvas, ctx, &mut self.resources)?;
+        self.card_game.draw(&mut canvas, &mut self.resources)?;
         // finished drawing, show it all on the screen!
         canvas.finish(ctx)?;
         Ok(())

@@ -1,6 +1,6 @@
 use super::*;
 use ggez::{
-    graphics::{Canvas, DrawParam, Image}, Context, GameResult,
+    graphics::{Canvas, DrawParam, Image}, GameResult,
 };
 use glam::Vec2;
 use std::f32::consts::PI;
@@ -45,8 +45,10 @@ impl Deck {
 
 //////// MyCardGame ////////
 impl MyCardGame {
-    pub fn draw(&self, canvas: &mut Canvas, ctx: &mut Context, res: &mut GameResources) -> GameResult<()> {
-        let (screen_width, screen_height) = ctx.gfx.drawable_size();
+    pub fn draw(&self, canvas: &mut Canvas, res: &mut GameResources) -> GameResult<()> {
+        let (screen_width, screen_height) = canvas.screen_coordinates()
+            .map(|rect| (rect.w, rect.h))
+            .unwrap_or((600.0, 400.0));
         // draw splayed cards
         let splayed_cards_loc = Vec2::new( 0.0, 40.0 );
         for (i, card_spec) in self.splayed_cards.iter().enumerate() {
@@ -138,6 +140,7 @@ fn giving_card_loc(start_loc: Vec2, end_loc: Vec2, p: f32) -> Vec2 {
                  p)
 }
 
+#[allow(dead_code)]
 enum Interpolation {
     Linear,
     SlowDown,
